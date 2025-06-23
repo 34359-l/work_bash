@@ -27,14 +27,14 @@ echo "****************************************************************"
 
 cd $VLLM_PATH/benchmarks
 
-for j in "${!prompts[@]}"; do
+for i in "${!input[@]}"; do
+input_len=${input[$i]}
+output_len=${output[$i]} 
+
+    for j in "${!prompts[@]}"; do
     pro=${prompts[$j]}
     con=${concurrency[$j]}
-
-    for i in "${!input[@]}"; do
-    input_len=${input[$i]}
-    output_len=${output[$i]} 
-
+    
         cmd="benchmark_serving.py --host $HOST --port $PORT --backend vllm --model $MODEL_PATH --served-model-name $MODEL_NAME --dataset-name random --max-concurrency $con --num-prompts $pro --random-input-len $input_len --random-output-len $output_len --ignore-eos"
 
         echo "==================================================" >> $LOGFILE

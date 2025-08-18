@@ -3,6 +3,63 @@ import os
 import sys
 import pandas as pd
 
+tool="vllm"
+
+def bench_tool_patterns():
+    if (tool == "vllm"):
+        patterns = {
+            "concurrency": r"max-concurrency:\s+(\d+)",
+            "prompts": r"num-prompts:\s+(\d+)",
+            "input_len": r"input_len:\s+(\d+)",
+            "output_len": r"output_len:\s+(\d+)",
+            "Successful requests": r"Successful requests:\s+(\d+)",
+            "Benchmark duration (s)": r"Benchmark duration \(s\):\s+([\d.]+)",
+            "Total input tokens": r"Total input tokens:\s+(\d+)",
+            "Total generated tokens": r"Total generated tokens:\s+(\d+)",
+            "Request throughput (req/s)": r"Request throughput \(req/s\):\s+([\d.]+)",
+            "Output token throughput (tok/s)": r"Output token throughput \(tok/s\):\s+([\d.]+)",
+            "Total Token throughput (tok/s)": r"Total Token throughput \(tok/s\):\s+([\d.]+)",
+            "Mean TTFT (ms)": r"Mean TTFT \(ms\):\s+([\d.]+)",
+            "Median TTFT (ms)": r"Median TTFT \(ms\):\s+([\d.]+)",
+            "P99 TTFT (ms)": r"P99 TTFT \(ms\):\s+([\d.]+)",
+            "Mean TPOT (ms)": r"Mean TPOT \(ms\):\s+([\d.]+)",
+            "Median TPOT (ms)": r"Median TPOT \(ms\):\s+([\d.]+)",
+            "P99 TPOT (ms)": r"P99 TPOT \(ms\):\s+([\d.]+)",
+            "Mean ITL (ms)": r"Mean ITL \(ms\):\s+([\d.]+)",
+            "Median ITL (ms)": r"Median ITL \(ms\):\s+([\d.]+)",
+            "P99 ITL (ms)": r"P99 ITL \(ms\):\s+([\d.]+)",
+        }
+    elif (tool == "sglang"):
+        patterns = {
+        "concurrency": r"max-concurrency:\s+(\d+)",
+        "prompts": r"num-prompts:\s+(\d+)",
+        "input_len": r"input_len:\s+(\d+)",
+        "output_len": r"output_len:\s+(\d+)",
+
+        "Max request concurrency": r"Max request concurrency:\s+(\d+)",
+        "Successful requests": r"Successful requests:\s+(\d+)",
+        "Benchmark duration (s)": r"Benchmark duration \(s\):\s+([\d.]+)",
+        "Total input tokens": r"Total input tokens:\s+(\d+)",
+        "Total generated tokens": r"Total generated tokens:\s+(\d+)",
+        "Total generated tokens (retokenized)": r"Total generated tokens \(retokenized\):\s+(\d+)",
+        "Request throughput (req/s)": r"Request throughput \(req/s\):\s+([\d.]+)",
+        
+        "Input token throughput (tok/s)": r"Input token throughput \(tok/s\):\s+([\d.]+)",
+        "Output token throughput (tok/s)": r"Output token throughput \(tok/s\):\s+([\d.]+)",
+        "Total Token throughput (tok/s)": r"Total Token throughput \(tok/s\):\s+([\d.]+)",
+        "Concurrency": r"Concurrency:\s+([\d.]+)",
+
+        "Mean TTFT (ms)": r"Mean TTFT \(ms\):\s+([\d.]+)",
+        "Median TTFT (ms)": r"Median TTFT \(ms\):\s+([\d.]+)",
+        "P99 TTFT (ms)": r"P99 TTFT \(ms\):\s+([\d.]+)",
+        "Mean ITL (ms)": r"Mean ITL \(ms\):\s+([\d.]+)",
+        "Median ITL (ms)": r"Median ITL \(ms\):\s+([\d.]+)",
+        "P95 ITL (ms)": r"P95 ITL \(ms\):\s+([\d.]+)",
+        "P99 ITL (ms)": r"P99 ITL \(ms\):\s+([\d.]+)",
+        "Max ITL (ms)": r"Max ITL \(ms\):\s+([\d.]+)",
+    }
+    return patterns
+        
 # 读取文本文件
 def read_txt_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -13,28 +70,7 @@ def read_txt_file(file_path):
 def parse_data_block(block):
     data = {}
     # 使用正则表达式提取关键指标
-    patterns = {
-        "concurrency": r"max-concurrency:\s+(\d+)",
-        "prompts": r"num-prompts:\s+(\d+)",
-        "input_len": r"input_len:\s+(\d+)",
-        "output_len": r"output_len:\s+(\d+)",
-        "Successful requests": r"Successful requests:\s+(\d+)",
-        "Benchmark duration (s)": r"Benchmark duration \(s\):\s+([\d.]+)",
-        "Total input tokens": r"Total input tokens:\s+(\d+)",
-        "Total generated tokens": r"Total generated tokens:\s+(\d+)",
-        "Request throughput (req/s)": r"Request throughput \(req/s\):\s+([\d.]+)",
-        "Output token throughput (tok/s)": r"Output token throughput \(tok/s\):\s+([\d.]+)",
-        "Total Token throughput (tok/s)": r"Total Token throughput \(tok/s\):\s+([\d.]+)",
-        "Mean TTFT (ms)": r"Mean TTFT \(ms\):\s+([\d.]+)",
-        "Median TTFT (ms)": r"Median TTFT \(ms\):\s+([\d.]+)",
-        "P99 TTFT (ms)": r"P99 TTFT \(ms\):\s+([\d.]+)",
-        "Mean TPOT (ms)": r"Mean TPOT \(ms\):\s+([\d.]+)",
-        "Median TPOT (ms)": r"Median TPOT \(ms\):\s+([\d.]+)",
-        "P99 TPOT (ms)": r"P99 TPOT \(ms\):\s+([\d.]+)",
-        "Mean ITL (ms)": r"Mean ITL \(ms\):\s+([\d.]+)",
-        "Median ITL (ms)": r"Median ITL \(ms\):\s+([\d.]+)",
-        "P99 ITL (ms)": r"P99 ITL \(ms\):\s+([\d.]+)",
-    }
+    patterns = bench_tool_patterns()
     for key, pattern in patterns.items():
         match = re.search(pattern, block)
         if match:

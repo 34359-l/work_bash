@@ -1,7 +1,6 @@
 #/bin/bash
 
 # 入参：配置文件，包含模型各项参数，参考token_perf.config
-# 可选入参：parse，自动将日志生成excel
 # 日志文件在./token_perf_log，文件名见脚本执行时打印信息
 
 
@@ -25,17 +24,37 @@ echo "****************************************************************"
 echo "log: $LOGFILE"
 echo "****************************************************************"
 
-cd $VLLM_PATH/benchmarks
-
 for i in "${!input[@]}"; do
 input_len=${input[$i]}
 output_len=${output[$i]} 
 
     for j in "${!prompts[@]}"; do
-    pro=${prompts[$j]}
-    con=${concurrency[$j]}
-    
-        cmd="benchmark_serving.py --host $HOST --port $PORT --backend vllm --model $MODEL_PATH --served-model-name $MODEL_NAME --dataset-name random --max-concurrency $con --num-prompts $pro --random-input-len $input_len --random-output-len $output_len --ignore-eos"
+        pro=${prompts[$j]}
+        con=${concurrency[$j]}
+
+        if [[ $tool == "vllm" ]]; then
+            cmd="vllm bench serve --host $HOST \
+                                --port $PORT \
+                                --backend vllm \
+                                --model $MODEL_PATH \
+                                --served-model-name $MODEL_NAME \
+                                --dataset-name random \
+                                --max-concurrency $con \
+                                --num-prompts $pro \
+                                --random-input-len $input_len \
+                                --random-output-len $output_len"
+        elif [[ $tool == "sglang" ]]; then
+            cmd="python3 -m sglang.bench_serving \
+                    --backend sglang-oai \
+                    --model $MODEL_PATH \
+                    --host localhost --port 8000 \
+                    --dataset-name random \
+                    --random-input-len $input_len \
+                    --random-output-len $output_len \
+                    --random-range-ratio 0.85 \
+                    --num-prompt $pro \
+                    --max-concurrency $con"
+        fi
 
         echo "==================================================" >> $LOGFILE
         echo "Params:"                          >> $LOGFILE
@@ -46,11 +65,6 @@ output_len=${output[$i]}
         echo "output_len:       $output_len"    >> $LOGFILE
         echo "==================================================" >> $LOGFILE
 
-        python3 $cmd | tee -a $LOGFILE
+        $cmd | tee -a $LOGFILE
     done
 done
-
-if [ -n "$2" ]; then
-    echo "start parse data..."
-    python ./parse_token_data.py $LOGFILE
-fi

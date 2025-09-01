@@ -13,7 +13,7 @@ source $1
 set -euo pipefail
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-LOGDIR="$(pwd)/token_perf_log"
+LOGDIR="$(pwd)/perf_log"
 LOGFILE="${LOGDIR}/${TIMESTAMP}.log"
 
 if [ ! -d $LOGDIR ]; then
@@ -35,7 +35,6 @@ output_len=${output[$i]}
         if [[ $tool == "vllm" ]]; then
             cmd="vllm bench serve --host $HOST \
                                 --port $PORT \
-                                --backend vllm \
                                 --model $MODEL_PATH \
                                 --served-model-name $MODEL_NAME \
                                 --dataset-name random \
@@ -65,6 +64,11 @@ output_len=${output[$i]}
         echo "output_len:       $output_len"    >> $LOGFILE
         echo "==================================================" >> $LOGFILE
 
-        $cmd | tee -a $LOGFILE
+        per_log="${LOGDIR}/il${input_len}_ol${output_len}_np${pro}_mc${con}.log"
+        $cmd | tee $per_log
+        cat $per_log >> $LOGFILE
     done
 done
+
+mkdir -p ${LOGDIR}/${MODEL_NAME}
+mv ${LOGDIR}/il*.log ${LOGDIR}/${MODEL_NAME}

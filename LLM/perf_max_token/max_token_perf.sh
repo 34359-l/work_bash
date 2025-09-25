@@ -50,7 +50,7 @@ output_len=${output[$i]}
                     --dataset-name random \
                     --random-input-len $input_len \
                     --random-output-len $output_len \
-                    --random-range-ratio 0.85 \
+                    --random-range-ratio $ratio \
                     --num-prompt $pro \
                     --max-concurrency $con"
         fi
